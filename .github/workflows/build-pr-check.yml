@@ -12,12 +12,10 @@ name: build-pr-check
 on: [push, pull_request]
 
 jobs:
-  build:
+  set-pr-number:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
       - name: Set PR number
         if: github.event_name == 'pull_request'
         env:
@@ -36,6 +34,13 @@ jobs:
             git commit -m "Set PR_IMAGE_TAG"
             git push origin HEAD:${{ github.head_ref }}
           fi
+  build:
+    needs: [set-pr-number]
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
       - name: Check all properties have description
         run: ./check_properties_description.sh
       - name: Set up JDK 11
@@ -71,3 +76,18 @@ jobs:
       - name: Push docker images
         if: github.event_name == 'pull_request'
         run: docker push quay.io/eclipse/che-server:${{ env.PR_IMAGE_TAG }}
+  push-pr-number:
+    if: ${{ always() }}
+    needs: [build]
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+      - name: Push PR number
+        if: github.event_name == 'pull_request'
+        run: |
+          mkdir -p ./shared-files
+          if [ -f ./shared-files/pr-image-tag ] && [[ $(cat ./shared-files/pr-image-tag) == *"pr-${{ github.event.number }}"* ]]; then
+            echo "File already exists with correct value. Skipping push."
+          else
+            git push origin HEAD:${{ github.head_ref }}
+          fi
