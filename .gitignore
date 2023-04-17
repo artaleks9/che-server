@@ -88,6 +88,7 @@ tests/e2e/dist/
 tests/e2e/node_modules/
 tests/e2e/report/
 tests/e2e/load-test-folder
+shared-files/pr-image-tag
 
 # Cypress modules #
 ###################
