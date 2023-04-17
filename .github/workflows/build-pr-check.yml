@@ -29,10 +29,10 @@ jobs:
             echo -n "PR_IMAGE_TAG=pr-${{ github.event.number }}" > ./shared-files/pr-image-tag
             git config --local user.name "${{ env.GIT_COMMITTER_NAME }}"
             git config --local user.email "${{ env.GIT_COMMITTER_EMAIL }}"
+            git pull --rebase origin ${{ github.head_ref }}  
             git add ./shared-files/pr-image-tag
             git commit -m "Set PR_IMAGE_TAG"
-            git pull --rebase origin ${{ github.head_ref }}
-            git push origin HEAD:${{ github.head_ref }}
+            # git push origin HEAD:${{ github.head_ref }}
           fi
   build:
     needs: [set-pr-number]
@@ -74,3 +74,18 @@ jobs:
       - name: Push docker images
         if: github.event_name == 'pull_request'
         run: docker push quay.io/eclipse/che-server:${{ env.PR_IMAGE_TAG }}
+  push-pr-number:
+    if: ${{ always() }}
+    needs: [build]
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set PR number
+        if: github.event_name == 'pull_request'
+        run: |
+          mkdir -p ./shared-files
+          if [ -f ./shared-files/pr-image-tag ] && [[ $(cat ./shared-files/pr-image-tag) == *"pr-${{ github.event.number }}"* ]]; then
+            echo "File already exists with correct value. Skipping push."
+          else
+            git push origin HEAD:${{ github.head_ref }}
+          fi
