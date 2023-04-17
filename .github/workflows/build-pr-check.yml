@@ -52,9 +52,6 @@ jobs:
           distribution: 'temurin'
           java-version: '11'
           cache: 'maven'
-      - name: Build docker images
-        if: github.event_name == 'pull_request'
-        run: ./dockerfiles/build.sh --tag:${{ env.PR_IMAGE_TAG }}
       - name: Push pr number
         if: github.event_name == 'pull_request'
         run: git push origin HEAD:${{ github.head_ref }}
