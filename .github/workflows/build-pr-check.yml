@@ -35,7 +35,7 @@ jobs:
             git pull --rebase origin ${{ github.head_ref }}  
             git add ./shared-files/pr-image-tag
             git commit -m "Set PR_IMAGE_TAG"
-            # git push origin HEAD:${{ github.head_ref }}
+            git push origin HEAD:${{ github.head_ref }}
           fi
   build:
     needs: [set-pr-number]
@@ -52,6 +52,4 @@ jobs:
           distribution: 'temurin'
           java-version: '11'
           cache: 'maven'
-      - name: Push pr number
-        if: github.event_name == 'pull_request'
-        run: git push origin HEAD:${{ github.head_ref }}
+
