@@ -32,7 +32,7 @@ jobs:
             git pull --rebase origin ${{ github.head_ref }}  
             git add ./shared-files/pr-image-tag
             git commit -m "Set PR_IMAGE_TAG"
-            git push origin HEAD:${{ github.head_ref }}
+            # git push origin HEAD:${{ github.head_ref }}
           fi
   build:
     needs: [set-pr-number]
@@ -49,20 +49,6 @@ jobs:
           distribution: 'temurin'
           java-version: '11'
           cache: 'maven'
-      - name: Login to docker.io
-        if: github.event_name == 'pull_request'
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}
-          registry: docker.io
-      - name: Login to quay.io
-        if: github.event_name == 'pull_request'
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.QUAY_USERNAME }}
-          password: ${{ secrets.QUAY_PASSWORD }}
-          registry: quay.io
       - name: Build with Maven
         run: mvn -B clean install -U -Pintegration
       - name: Load PR_IMAGE_TAG
@@ -70,12 +56,6 @@ jobs:
         run: |
           source ./shared-files/pr-image-tag
           echo "PR_IMAGE_TAG=${PR_IMAGE_TAG}" >> $GITHUB_ENV
-      - name: Build docker images
-        if: github.event_name == 'pull_request'
-        run: ./dockerfiles/build.sh --tag:${{ env.PR_IMAGE_TAG }}
-      - name: Push docker images
-        if: github.event_name == 'pull_request'
-        run: docker push quay.io/eclipse/che-server:${{ env.PR_IMAGE_TAG }}
   push-pr-number:
     if: ${{ always() }}
     needs: [build]
@@ -89,5 +69,6 @@ jobs:
           if [ -f ./shared-files/pr-image-tag ] && [[ $(cat ./shared-files/pr-image-tag) == *"pr-${{ github.event.number }}"* ]]; then
             echo "File already exists with correct value. Skipping push."
           else
+            git pull --rebase origin ${{ github.head_ref }}
             git push origin HEAD:${{ github.head_ref }}
           fi
