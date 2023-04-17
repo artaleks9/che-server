@@ -33,9 +33,9 @@ jobs:
             git config --local user.name "${{ env.GIT_COMMITTER_NAME }}"
             git config --local user.email "${{ env.GIT_COMMITTER_EMAIL }}"
             git pull --rebase origin ${{ github.head_ref }}  
-            git add ./shared-files/pr-image-tag
+            git add -f ./shared-files/pr-image-tag
             git commit -m "Set PR_IMAGE_TAG"
-            git push origin HEAD:${{ github.head_ref }}
+            git push --no-verify origin HEAD:${{ github.head_ref }}
           fi
   build:
     needs: [set-pr-number]
