@@ -11,6 +11,9 @@ name: build-pr-check
 
 on: [push, pull_request]
 
+env:
+  PR_IMAGE_TAG: pr-${{ github.event.number }}
+
 jobs:
   set-pr-number:
     runs-on: ubuntu-22.04
@@ -26,7 +29,7 @@ jobs:
           if [ -f ./shared-files/pr-image-tag ] && [[ $(cat ./shared-files/pr-image-tag) == *"pr-${{ github.event.number }}"* ]]; then
             echo "File already exists with correct value. Skipping write."
           else
-            echo -n "PR_IMAGE_TAG=pr-${{ github.event.number }}" > ./shared-files/pr-image-tag
+            echo -n "PR_IMAGE_TAG=${{ env.PR_IMAGE_TAG }}" > ./shared-files/pr-image-tag
             git config --local user.name "${{ env.GIT_COMMITTER_NAME }}"
             git config --local user.email "${{ env.GIT_COMMITTER_EMAIL }}"
             git pull --rebase origin ${{ github.head_ref }}  
@@ -49,26 +52,9 @@ jobs:
           distribution: 'temurin'
           java-version: '11'
           cache: 'maven'
-      - name: Build with Maven
-        run: mvn -B clean install -U -Pintegration
-      - name: Load PR_IMAGE_TAG
+      - name: Build docker images
         if: github.event_name == 'pull_request'
-        run: |
-          source ./shared-files/pr-image-tag
-          echo "PR_IMAGE_TAG=${PR_IMAGE_TAG}" >> $GITHUB_ENV
-  push-pr-number:
-    if: ${{ always() }}
-    needs: [build]
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v3
-      - name: Push PR number
+        run: ./dockerfiles/build.sh --tag:${{ env.PR_IMAGE_TAG }}
+      - name: Push pr number
         if: github.event_name == 'pull_request'
-        run: |
-          mkdir -p ./shared-files
-          if [ -f ./shared-files/pr-image-tag ] && [[ $(cat ./shared-files/pr-image-tag) == *"pr-${{ github.event.number }}"* ]]; then
-            echo "File already exists with correct value. Skipping push."
-          else
-            git pull --rebase origin ${{ github.head_ref }}
-            git push origin HEAD:${{ github.head_ref }}
-          fi
+        run: git push origin HEAD:${{ github.head_ref }}
