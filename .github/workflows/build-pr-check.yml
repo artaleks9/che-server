@@ -25,7 +25,7 @@ jobs:
           GIT_COMMITTER_NAME: ${{ github.event.pull_request.user.login }}
           GIT_COMMITTER_EMAIL: ${{ github.actor }}@users.noreply.github.com
         run: |
-          BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD:${{ github.head_ref }})
+          BRANCH_NAME=$(git rev-parse --abbrev-ref ${{ github.head_ref }})
           REMOTE_BRANCH_EXISTS=$(git ls-remote --heads origin "pr-number-${BRANCH_NAME}")
           git config --local user.name "${{ env.GIT_COMMITTER_NAME }}"
           git config --local user.email "${{ env.GIT_COMMITTER_EMAIL }}"
