@@ -27,7 +27,7 @@ jobs:
           GIT_COMMITTER_EMAIL: ${{ github.actor }}@users.noreply.github.com
         run: |
           git fetch origin
-          REMOTE_BRANCH_EXISTS=$(git ls-remote --heads origin "pr-number-${BRANCH_NAME}")
+          REMOTE_BRANCH_EXISTS=$(git ls-remote --heads origin "pr-number-${{ env.BRANCH_NAME }}")
           git config --local user.name "${{ env.GIT_COMMITTER_NAME }}"
           git config --local user.email "${{ env.GIT_COMMITTER_EMAIL }}"
           mkdir -p ./shared-files
