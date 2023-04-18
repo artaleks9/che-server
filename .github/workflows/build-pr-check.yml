@@ -22,10 +22,10 @@ jobs:
       - name: Set PR number
         if: github.event_name == 'pull_request'
         env:
+          BRANCH_NAME: ${{ github.head_ref }}
           GIT_COMMITTER_NAME: ${{ github.event.pull_request.user.login }}
           GIT_COMMITTER_EMAIL: ${{ github.actor }}@users.noreply.github.com
         run: |
-          BRANCH_NAME=$(git rev-parse --abbrev-ref ${{ github.head_ref }})
           REMOTE_BRANCH_EXISTS=$(git ls-remote --heads origin "pr-number-${BRANCH_NAME}")
           git config --local user.name "${{ env.GIT_COMMITTER_NAME }}"
           git config --local user.email "${{ env.GIT_COMMITTER_EMAIL }}"
