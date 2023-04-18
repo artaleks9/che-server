@@ -44,6 +44,7 @@ jobs:
             fi
           fi
   build:
+    needs: [set-pr-number]
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
