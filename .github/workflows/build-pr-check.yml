@@ -22,21 +22,26 @@ jobs:
       - name: Set PR number
         if: github.event_name == 'pull_request'
         env:
+          BRANCH_NAME: $(basename ${{ github.ref }})
           GIT_COMMITTER_NAME: ${{ github.event.pull_request.user.login }}
           GIT_COMMITTER_EMAIL: ${{ github.actor }}@users.noreply.github.com
         run: |
+          REMOTE_BRANCH_EXISTS=$(git ls-remote --heads origin "pr-number-${BRANCH_NAME}")
+          git config --local user.name "${{ env.GIT_COMMITTER_NAME }}"
+          git config --local user.email "${{ env.GIT_COMMITTER_EMAIL }}"
           mkdir -p ./shared-files
-          if [ -f ./shared-files/pr-image-tag ] && [[ $(cat ./shared-files/pr-image-tag) == *"pr-${{ github.event.number }}"* ]]; then
-            echo "File already exists with correct value. Skipping write."
-          else
-            git config --local user.name "${{ env.GIT_COMMITTER_NAME }}"
-            git config --local user.email "${{ env.GIT_COMMITTER_EMAIL }}"
-            git checkout pr-number
+          if [[ -z "${REMOTE_BRANCH_EXISTS}" ]]; then
+            git checkout -b "pr-number-${BRANCH_NAME}"
             echo -n "PR_IMAGE_TAG=${{ env.PR_IMAGE_TAG }}" > ./shared-files/pr-image-tag
-            git pull --rebase origin pr-number  
             git add ./shared-files/pr-image-tag
             git commit -m "Set PR_IMAGE_TAG"
-            git push origin HEAD:pr-number
+            git push origin HEAD:pr-number-${BRANCH_NAME}
+          else
+            git checkout "pr-number-${BRANCH_NAME}"
+            if [ -f ./shared-files/pr-image-tag ] && [[ $(cat ./shared-files/pr-image-tag) == *"pr-${{ github.event.number }}"* ]]; then
+                echo "File already exists with correct value. Skipping write."
+                exit 0
+            fi
           fi
   build:
     runs-on: ubuntu-22.04
